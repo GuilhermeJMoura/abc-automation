@@ -9,6 +9,13 @@ import re
 import json
 sys.path.append(os.path.abspath('../n8n-workflow'))
 
+from dotenv import load_dotenv
+import os
+
+# Load variables from .env into environment
+load_dotenv()
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # Adicionar o diretório raiz ao sys.path para importação correta
 
@@ -32,7 +39,7 @@ def generate_workflow():
             return jsonify({"error": "O parâmetro 'user_prompt' é obrigatório"}), 400
 
         # Configurar chave API se fornecida
-        api_key = "<OPENAI_API_KEY>"  # Substitua pela sua chave API real
+        api_key = OPENAI_API_KEY
         if api_key:
             os.environ["OPENAI_API_KEY"] = api_key
 

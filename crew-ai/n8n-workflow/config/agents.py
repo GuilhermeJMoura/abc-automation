@@ -1,11 +1,16 @@
 from crewai import Agent
 import os
 from config.tools import n8n_docs_search_tool
+from dotenv import load_dotenv
+import os
+
+# Load variables from .env into environment
+
+load_dotenv()
 
 # Configuração do LLM diretamente no CrewAI
 # Você pode definir a variável de ambiente OPENAI_API_KEY ou configurá-la diretamente aqui
 # Substitua pela sua chave API real
-os.environ["OPENAI_API_KEY"] = "<OPENAI_API_KEY>"
 
 node_identifier = Agent(
     role="Especialista em identificação de componentes de automações n8n",
