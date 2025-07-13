@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: n8n_workflow_generator
+Version: 0.1.0
+Summary: Projeto CrewAI para geração automática de workflows n8n a partir de prompts
+Author-email: Seu Nome <seu@email.com>
+Requires-Dist: crewai
+Requires-Dist: crewai-tools
+Requires-Dist: openai

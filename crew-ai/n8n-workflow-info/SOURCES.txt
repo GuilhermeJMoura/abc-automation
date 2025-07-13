@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/n8n_workflow_generator/crew_ai.py
+src/n8n_workflow_generator/main.py
+src/n8n_workflow_generator.egg-info/PKG-INFO
+src/n8n_workflow_generator.egg-info/SOURCES.txt
+src/n8n_workflow_generator.egg-info/dependency_links.txt
+src/n8n_workflow_generator.egg-info/requires.txt
+src/n8n_workflow_generator.egg-info/top_level.txt
+src/n8n_workflow_generator/config/agents.py
+src/n8n_workflow_generator/config/tasks.py

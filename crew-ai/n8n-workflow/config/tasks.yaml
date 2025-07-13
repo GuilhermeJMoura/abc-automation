@@ -1,0 +1,21 @@
+identify_nodes_task:
+  description: >
+    Analise o seguinte prompt do usuário e identifique todos os nodes do n8n necess�rios para realizar a automa��o descrita.
+    Para cada node, informe:
+    - Tipo (ex: email, cron, HTTP Request)
+    - Principais parâmetros (ex: email de destino, URL de API, tempo de execução)
+
+    Prompt:
+    {user_prompt}
+  expected_output: >
+    Uma lista estruturada com os nodes do n8n necessários e seus parâmetros principais.
+
+generate_workflow_task:
+  description: >
+    A partir da lista de nodes a seguir, gere um JSON completo e funcional de workflow n8n.
+    Este JSON será importado diretamente no n8n e deve conter todos os parâmetros já preenchidos e conectados entre si.
+
+    Lista de Nodes:
+    {identified_nodes}
+  expected_output: >
+    Um JSON válido de workflow n8n com todos os nodes conectados e prontos para execução.
