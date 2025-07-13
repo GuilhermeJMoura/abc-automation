@@ -1,4 +1,6 @@
 const axios = require('axios');
+const { settings } = require('../app');
+const crypto = require('crypto');
 const api = axios.create({
   baseURL : process.env.N8N_API_URL,
   headers : {
@@ -6,13 +8,19 @@ const api = axios.create({
     'Content-Type'  : 'application/json',
   },
 });
+console.log(`🔗 Conectado ao N8N API em ${process.env.N8N_API_URL}`);
 
 /** Create workflow but keep inactive until validated */
 exports.createWorkflow = async (workflowJSON) => {
   const { data } = await api.post('/workflows', {
-    ...workflowJSON,
-    active: false,
+    connections: workflowJSON?.connections,
+    nodes: workflowJSON?.nodes,
+    name:  `Workflow ${crypto.randomBytes(4).toString('hex')}`, // random name
+    settings: {
+        "executionOrder": "v1"
+    }
   });
+  console.log('Workflow criado:', data);
   return data;
 };
 
