@@ -19,7 +19,7 @@ import {
   ArrowRight
 } from 'lucide-react'
 import { createWorkflow } from '@/services/api'
-import { useWebSocket } from '@/hooks/useWebSocket'
+import { useWebSocket, useWebSocketMessages } from '@/hooks/useWebSocket'
 
 interface Message {
   id: string
@@ -68,7 +68,8 @@ export default function MainChatbot() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false)
-  const { messages: wsMessages, isConnected, clearMessages } = useWebSocket()
+  const { isConnected } = useWebSocket()
+  const { messages: wsMessages, clearMessages } = useWebSocketMessages('*')
 
   const activeConversation = conversations.find(c => c.id === activeConversationId)
 
@@ -82,7 +83,7 @@ export default function MainChatbot() {
 
   // Processar mensagens WebSocket
   useEffect(() => {
-    if (wsMessages.length > 0) {
+    if (wsMessages && wsMessages.length > 0) {
       const lastWsMessage = wsMessages[wsMessages.length - 1]
       
       if (lastWsMessage.type === 'progress' && lastWsMessage.msg) {
@@ -168,7 +169,7 @@ export default function MainChatbot() {
       // Sucesso
       const successMessage: Message = {
         id: `success-${Date.now()}`,
-        text: `✅ Workflow criado com sucesso! ID: ${workflow.id}\n\nDescrição: ${workflow.name || 'Workflow automático'}\nStatus: ${workflow.active ? 'Ativo' : 'Inativo'}`,
+        text: `✅ Workflow criado com sucesso! ID: ${workflow.workflow.id}\n\nDescrição: ${workflow.workflow.name || 'Workflow automático'}\nStatus: ${workflow.workflow.active ? 'Ativo' : 'Inativo'}`,
         sender: 'bot',
         timestamp: new Date()
       }

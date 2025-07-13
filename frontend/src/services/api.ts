@@ -19,6 +19,21 @@ export interface ApiError {
   message?: string
 }
 
+export interface ClarificationSession {
+  session_id: string
+  questions?: string[]
+  ready?: boolean
+  context?: string
+}
+
+export interface ClarificationResponse {
+  session_id: string
+  questions?: string[]
+  ready?: boolean
+  context?: string
+  error?: string
+}
+
 // Serviço para criar workflow
 export async function createWorkflow(prompt: string): Promise<WorkflowApiResponse> {
   try {
@@ -71,6 +86,84 @@ export async function getAllWorkflows(): Promise<WorkflowResponse[]> {
     if (!response.ok) {
       const error: ApiError = await response.json()
       throw new Error(error.error || 'Erro ao buscar workflows')
+    }
+
+    return await response.json()
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('Erro de conexão com o servidor')
+  }
+}
+
+// Serviço para iniciar clarificação
+export async function startClarification(prompt: string): Promise<ClarificationResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/workflows/clarify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_prompt: prompt }),
+    })
+
+    if (!response.ok) {
+      const error: ApiError = await response.json()
+      throw new Error(error.error || 'Erro ao iniciar clarificação')
+    }
+
+    return await response.json()
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('Erro de conexão com o servidor')
+  }
+}
+
+// Serviço para continuar clarificação
+export async function continueClarification(sessionId: string, answer: string): Promise<ClarificationResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/workflows/clarify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        session_id: sessionId, 
+        user_prompt: answer 
+      }),
+    })
+
+    if (!response.ok) {
+      const error: ApiError = await response.json()
+      throw new Error(error.error || 'Erro ao continuar clarificação')
+    }
+
+    return await response.json()
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('Erro de conexão com o servidor')
+  }
+}
+
+// Serviço para gerar workflow com contexto clarificado
+export async function generateWorkflowWithContext(context: string): Promise<WorkflowApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/workflows/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ context }),
+    })
+
+    if (!response.ok) {
+      const error: ApiError = await response.json()
+      throw new Error(error.error || 'Erro ao gerar workflow')
     }
 
     return await response.json()
