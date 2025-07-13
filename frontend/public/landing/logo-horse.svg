@@ -1,0 +1,5 @@
+<svg width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="75" cy="75" r="70" stroke="#00d4ff" stroke-width="3" fill="none"/>
+  <rect x="55" y="55" width="40" height="40" rx="5" fill="#00d4ff" opacity="0.6"/>
+  <text x="75" y="85" text-anchor="middle" fill="#00d4ff" font-family="Arial, sans-serif" font-size="14" font-weight="bold">AI</text>
+</svg> 
