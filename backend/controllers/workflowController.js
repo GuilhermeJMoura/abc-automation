@@ -21,3 +21,10 @@ exports.getWorkflow = async (req, res, next) => {
     res.json(wf);
   } catch (err) { next(err); }
 };
+
+exports.getAllWorkflows = async (req, res, next) => {
+  try {
+    const workflows = await n8n.getAllWorkflows();
+    res.json(workflows);
+  } catch (err) { next(err); }
+}
