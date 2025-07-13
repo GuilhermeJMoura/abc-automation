@@ -1,5 +1,6 @@
 const axios = require('axios');
-const CREW = process.env.CREW_AI_BASE_URL;
+const config = require('../config/env');
+const CREW = config.crewAI.baseUrl;
 
 async function call(path, payload) {
   const { data } = await axios.post(`${CREW}/${path}`, payload, {

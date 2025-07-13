@@ -1,14 +1,14 @@
 const axios = require('axios');
-const { settings } = require('../app');
+const config = require('../config/env');
 const crypto = require('crypto');
 const api = axios.create({
-  baseURL : process.env.N8N_API_URL,
+  baseURL : config.n8n.baseUrl,
   headers : {
-    'X-N8N-API-KEY': process.env.N8N_API_KEY,  // official header :contentReference[oaicite:1]{index=1}
+    'X-N8N-API-KEY': config.n8n.apiKey,
     'Content-Type'  : 'application/json',
   },
 });
-console.log(`🔗 Conectado ao N8N API em ${process.env.N8N_API_URL}`);
+console.log(`🔗 Conectado ao N8N API em ${config.n8n.baseUrl}`);
 
 /** Create workflow but keep inactive until validated */
 exports.createWorkflow = async (workflowJSON) => {

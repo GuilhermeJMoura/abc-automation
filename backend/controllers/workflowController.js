@@ -1,6 +1,7 @@
 const workflowService = require('../services/workflowService');
 const { sendProgress } = require('../services/websocketService');
 const n8n             = require('../services/n8nService');
+const agent           = require('../services/agentService');
 
 exports.createWorkflow = async (req, res, next) => {
   try {
@@ -47,5 +48,36 @@ exports.bypassActivateWorkflow = async (req, res, next) => {
 
     await n8n.activateWorkflow(id);
     res.status(204).send();  // No content
+  } catch (err) { next(err); }
+}
+
+exports.startClarification = async (req, res, next) => {
+  try {
+    const { user_prompt } = req.body;
+    if (!user_prompt) return res.status(400).json({ error: 'user_prompt is required' });
+
+    const result = await agent.startClarify(user_prompt);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+exports.continueClarification = async (req, res, next) => {
+  try {
+    const { session_id, user_prompt } = req.body;
+    if (!session_id) return res.status(400).json({ error: 'session_id is required' });
+    if (!user_prompt) return res.status(400).json({ error: 'user_prompt is required' });
+
+    const result = await agent.continueClarify(session_id, user_prompt);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+exports.generateWorkflowWithContext = async (req, res, next) => {
+  try {
+    const { context } = req.body;
+    if (!context) return res.status(400).json({ error: 'context is required' });
+
+    const result = await agent.generateWorkflow(context);
+    res.json(result);
   } catch (err) { next(err); }
 }
