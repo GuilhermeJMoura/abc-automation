@@ -300,7 +300,7 @@ docker run -it --rm \
 #### **Terminal 2: Crew AI**
 ```bash
 cd crew-ai
-python start_crew_ai.py
+python n8n-workflow/api.py 
 ```
 
 #### **Terminal 3: Backend**
