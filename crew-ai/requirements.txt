@@ -1,3 +1,9 @@
 crewai
 crewai-tools
 openai
+flask
+requests
+langchain>=0.0.335
+# Removendo referência ao torch pré-compilado e usando versão padrão
+torch
+transformers 
