@@ -5,6 +5,11 @@ from pathlib import Path
 
 from config.tools import n8n_docs_search_tool
 # from embedchain.utils.constants import DataType
+from dotenv import load_dotenv
+import os
+
+# Load variables from .env into environment
+load_dotenv()
 
 # Configuração do LLM diretamente no CrewAI
 # Você pode definir a variável de ambiente OPENAI_API_KEY ou configurá-la diretamente aqui

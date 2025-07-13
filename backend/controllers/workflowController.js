@@ -33,9 +33,6 @@ exports.bypassCreateWorkflow = async (req, res, next) => {
   try {
     console.log('Bypassing creation logic');
     console.log('Request body:', req.body);
-    // const { body } = req.body;
-    // const { workflowJSON } = body;
-    // console.log('Bypassing creation with JSON:', workflowJSON);
     if (!req.body) return res.status(400).json({ error: 'Workflow JSON is required' });
 
     const workflow = await n8n.createWorkflow(req.body);
