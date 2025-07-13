@@ -39,3 +39,10 @@ exports.getWorkflow = async (id) => {
   const { data } = await api.get(`/workflows/${id}`);   // docs show GET /api/v1/workflows/{id} :contentReference[oaicite:0]{index=0}
   return data;
 };
+
+exports.getAllWorkflows = async () => {
+  const { data } = await api.get('/workflows', {
+    params: { limit: 100 },  // adjust as needed, n8n defaults to 20
+  });
+  return data.data;  // returns array of workflows
+};
