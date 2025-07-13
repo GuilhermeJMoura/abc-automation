@@ -4,37 +4,46 @@ from config.agents import node_identifier, workflow_generator
 identify_nodes_task = Task(
     description="""
     Analise o seguinte prompt do usuário e identifique todos os nodes do n8n necessários para realizar a automação descrita.
+
     Para cada node, informe:
     - Tipo (ex: email, cron, HTTP Request)
     - Principais parâmetros (ex: email de destino, URL de API, tempo de execução)
+
+    ⚠️ IMPORTANTE:
+    - Antes de sugerir qualquer node ou operação, você DEVE obrigatoriamente consultar a documentação do n8n usando a ferramenta 'RagTool'.
+    - Use apenas nodes e operações que você confirmou estarem documentados oficialmente.
+    - Caso não encontre a operação ou node necessário na documentação, informe isso claramente e NÃO sugira esse elemento.
     
-    IMPORTANTE: Antes de sugerir qualquer node ou operação, utilize a ferramenta de busca para verificar se eles existem na plataforma n8n.
-    Use apenas nodes e operações que você confirmou existirem no n8n através da documentação oficial.
-    
-    Prompt:
+    Prompt do usuário:
     {user_prompt}
     """,
-    expected_output="Lista estruturada dos nodes do n8n com parâmetros principais, garantindo que todos os nodes e operações existam na plataforma.",
+    expected_output="""
+    Uma lista estruturada dos nodes do n8n com seus parâmetros principais,
+    garantindo que todos os nodes e operações estejam documentados na plataforma.
+    Caso algum node não seja documentado, informe que ele não pôde ser incluído.
+    """,
     agent=node_identifier
 )
 
 generate_workflow_task = Task(
     description="""
     A partir da seguinte lista de nodes, gere um JSON completo e funcional de workflow n8n.
-    
-    IMPORTANTE: Certifique-se de que todas as operações e parâmetros que você incluir no JSON existam realmente na plataforma n8n.
-    Utilize a ferramenta de busca para verificar na documentação oficial quais são as operações válidas para cada node antes de incluí-las no JSON.
-    
-    INSTRUÇÕES ESPECÍFICAS PARA USO DA FERRAMENTA n8n_docs_search:
-    1. Para cada node identificado na lista abaixo, você DEVE usar a ferramenta n8n_docs_search para buscar sua documentação
-    2. Use o formato exato: "n8n [nome do node] node documentation" na sua consulta
-    3. Analise o resultado da busca para confirmar as operações válidas antes de incluí-las no JSON
-    4. Não inclua operações que não foram confirmadas pela documentação
-    
+
+    ⚠️ REGRAS CRÍTICAS:
+    - Antes de incluir qualquer operação ou parâmetro no JSON, você DEVE usar a ferramenta 'RagTool' para consultar a documentação oficial do n8n.
+    - Verifique quais são os parâmetros e operações válidas de cada node baseado na documentação.
+    - NUNCA inclua algo que não esteja explicitamente documentado.
+    - Caso a documentação não traga informação suficiente para construir determinado trecho do workflow, você deve informar isso claramente e não gerar esse trecho.
+
     Lista de Nodes:
     {{identify_nodes_task.output}}
     """,
-    expected_output="JSON completo e funcional do workflow n8n, contendo apenas nodes e operações que existem na plataforma.",
+    expected_output="""
+    JSON completo e funcional do workflow n8n, contendo apenas nodes e operações confirmadas
+    na documentação oficial por meio da ferramenta 'RagTool'.
+    Em caso de ausência de dados suficientes na documentação, justifique claramente no lugar do trecho correspondente do JSON.
+    """,
     agent=workflow_generator,
     dependencies=[identify_nodes_task]
 )
+
