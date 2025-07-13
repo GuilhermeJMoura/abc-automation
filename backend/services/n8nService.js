@@ -20,7 +20,10 @@ exports.activateWorkflow = (id) => api.post(`/workflows/${id}/activate`);
 
 exports.triggerWebhook = async (workflow, sample = {}) => {
   const webhookNode = workflow.nodes.find(n => n.type === 'n8n-nodes-base.webhook');
-  if (!webhookNode) throw new Error('Webhook node not found');
+  if (!webhookNode) {
+    console.warn(`⚠️ Não foi possível encontrar o webhook para o workflow ${workflow.id}`);
+    return Promise.reject(new Error('Webhook node not found'));
+  }
 
   // Production webhook path lives in node.parameters.path
   const url = `${process.env.N8N_WEBHOOK_BASE}/${webhookNode.parameters.path}`;
