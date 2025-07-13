@@ -1,7 +1,6 @@
 from crewai import Task
 from config.agents import node_identifier, workflow_generator
 
-
 identify_nodes_task = Task(
     description="""
     Analise o seguinte prompt do usuário e identifique todos os nodes do n8n necessários para realizar a automação descrita.
