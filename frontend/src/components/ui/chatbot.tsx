@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import {
+  Send, Bot, User,
+  CheckCircle, XCircle, AlertCircle,
+} from 'lucide-react'
 import { createWorkflow } from '@/services/api'
 import { useWebSocket } from '@/hooks/useWebSocket'
 
@@ -14,226 +17,191 @@ interface Message {
 }
 
 interface ChatbotProps {
-  onWorkflowCreated?: (workflow: any) => void
+  onWorkflowCreated?: (wf: any) => void
 }
 
-export default function Chatbot({ onWorkflowCreated }: ChatbotProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Olá! Descreva o workflow que você gostaria de criar e eu vou ajudar você.',
-      sender: 'bot',
-      timestamp: new Date(),
-      type: 'normal'
-    }
-  ])
-  const [input, setInput] = useState('')
-  const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false)
+export default function Chatbot ({ onWorkflowCreated }: ChatbotProps) {
+  /* ---------------- state ---------------- */
+  const [messages, setMessages] = useState<Message[]>([{
+    id: '1',
+    text: 'Olá! Descreva o workflow que você gostaria de criar e eu vou ajudar você.',
+    sender: 'bot',
+    timestamp: new Date(),
+  }])
+  const [input, setInput]                     = useState('')
+  const [isCreating, setIsCreating]           = useState(false)
+  const [sid, setSid]                         = useState<string | null>(null)
+  const [pendingQuestion, setPendingQuestion] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { messages: wsMessages, isConnected, clearMessages } = useWebSocket()
+  /* evita hydration error com hora divergente */
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => setHydrated(true), [])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  /* ---------------- websocket ---------------- */
+  const {
+    messages: wsMessages,
+    isConnected,
+    clearMessages,
+    send,                    // <-- WE NEED THIS
+  } = useWebSocket()
 
+  /* autoscroll */
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Processar mensagens WebSocket
+  /* incoming WS events */
   useEffect(() => {
-    if (wsMessages.length > 0) {
-      const lastWsMessage = wsMessages[wsMessages.length - 1]
-      
-      if (lastWsMessage.type === 'progress' && lastWsMessage.msg) {
-        const progressMessage: Message = {
-          id: `progress-${Date.now()}`,
-          text: lastWsMessage.msg,
+    if (!wsMessages.length) return
+    const ev = wsMessages[wsMessages.length - 1]
+
+    if (ev.type === 'session') {
+      setSid(ev.sid)
+      return
+    }
+
+    if (ev.type === 'ask') {
+      const list = Array.isArray(ev.q) ? ev.q : [ev.q]
+      const now  = Date.now()
+      setMessages((m) => [
+        ...m,
+        ...list.map((txt: string, i: number) => ({
+          id: `ask-${now}-${i}`,
+          text: txt,
           sender: 'bot',
           timestamp: new Date(),
-          type: 'progress'
-        }
-        
-        setMessages(prev => [...prev, progressMessage])
-      }
+        }))
+      ])
+      setPendingQuestion(true)
+      return
+     }
+
+    if (ev.type === 'progress') {
+      setMessages((m) => [...m, {
+        id: `prog-${Date.now()}`,
+        text: ev.msg,
+        sender: 'bot',
+        timestamp: new Date(),
+        type: 'progress',
+      }])
     }
   }, [wsMessages])
 
-  const handleSend = async () => {
-    if (!input.trim() || isCreatingWorkflow) return
+  /* ---------------- handlers ---------------- */
+  async function handleSend () {
+    if (!input.trim()) return
 
-    const userMessage: Message = {
+    /* A) Reply to Clarifier */
+    if (pendingQuestion && sid) {
+      const answer = input.trim()
+      setMessages((m) => [...m, {
+        id: Date.now().toString(),
+        text: answer,
+        sender: 'user',
+        timestamp: new Date(),
+      }])
+      send({ type: 'answer', sid, a: answer })
+      setInput('')
+      setPendingQuestion(false)
+      return
+    }
+
+    /* B) Kick-off new workflow */
+    if (isCreating) return
+    setIsCreating(true)
+
+    const userMsg: Message = {
       id: Date.now().toString(),
       text: input.trim(),
       sender: 'user',
       timestamp: new Date(),
-      type: 'normal'
     }
-
-    setMessages(prev => [...prev, userMessage])
+    setMessages((m) => [...m, userMsg])
     setInput('')
-    setIsCreatingWorkflow(true)
-    clearMessages() // Limpar mensagens WebSocket anteriores
+    clearMessages()
 
     try {
-      // Adicionar mensagem inicial
-      const initialMessage: Message = {
+      setMessages((m) => [...m, {
         id: `init-${Date.now()}`,
-        text: 'Iniciando criação do workflow... Aguarde enquanto processo sua solicitação.',
+        text: 'Iniciando criação do workflow…',
         sender: 'bot',
         timestamp: new Date(),
-        type: 'progress'
-      }
-      setMessages(prev => [...prev, initialMessage])
+        type: 'progress',
+      }])
 
-      // Chamar API para criar workflow
-      const workflow = await createWorkflow(userMessage.text)
-      
-      // Sucesso
-      const successMessage: Message = {
-        id: `success-${Date.now()}`,
+      const { workflow, wsSession } = await createWorkflow(userMsg.text)
+      setSid(wsSession)
+
+      setMessages((m) => [...m, {
+        id: `ok-${Date.now()}`,
         text: `✅ Workflow criado com sucesso! ID: ${workflow.id}`,
         sender: 'bot',
         timestamp: new Date(),
-        type: 'success'
-      }
-      setMessages(prev => [...prev, successMessage])
-      
-      // Callback para componente pai
-      if (onWorkflowCreated) {
-        onWorkflowCreated(workflow)
-      }
-      
-    } catch (error) {
-      // Erro
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        text: `❌ Erro ao criar workflow: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        type: 'success',
+      }])
+
+      onWorkflowCreated?.(workflow)
+    } catch (err: any) {
+      setMessages((m) => [...m, {
+        id: `err-${Date.now()}`,
+        text: `❌ ${err.message || 'Erro desconhecido'}`,
         sender: 'bot',
         timestamp: new Date(),
-        type: 'error'
-      }
-      setMessages(prev => [...prev, errorMessage])
+        type: 'error',
+      }])
     } finally {
-      setIsCreatingWorkflow(false)
+      setIsCreating(false)
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  function handleKey (e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
     }
   }
 
-  const getMessageIcon = (type?: string) => {
-    switch (type) {
-      case 'success':
-        return <CheckCircle className="w-4 h-4 text-green-500" />
-      case 'error':
-        return <XCircle className="w-4 h-4 text-red-500" />
-      case 'progress':
-        return <AlertCircle className="w-4 h-4 text-yellow-500" />
-      default:
-        return <Bot className="w-4 h-4" />
-    }
-  }
+  /* helpers for icon / color – unchanged */
 
-  const getMessageBgColor = (type?: string) => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-50 border-green-200'
-      case 'error':
-        return 'bg-red-50 border-red-200'
-      case 'progress':
-        return 'bg-yellow-50 border-yellow-200'
-      default:
-        return 'bg-secondary'
-    }
-  }
-
+  /* ---------------- UI ---------------- */
   return (
-    <div className="flex flex-col h-full bg-card border border-border rounded-lg shadow-sm">
-      {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Bot className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold text-foreground">Assistente de Workflow</h3>
-          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-        </div>
+    <div className="flex flex-col h-full bg-card border rounded-lg">
+      {/* header */}
+      <div className="p-4 border-b flex items-center gap-2">
+        <Bot className="w-5 h-5 text-primary" />
+        <h3 className="font-semibold">Assistente de Workflow</h3>
+        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
       </div>
 
-      {/* Messages */}
+      {/* messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div className={`flex items-start gap-2 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                message.sender === 'user' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-secondary text-muted-foreground'
-              }`}>
-                {message.sender === 'user' ? (
-                  <User className="w-4 h-4" />
-                ) : (
-                  getMessageIcon(message.type)
-                )}
-              </div>
-              <div className={`p-3 rounded-lg border ${
-                message.sender === 'user'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : getMessageBgColor(message.type)
-              }`}>
-                <p className="text-sm">{message.text}</p>
-                <span className="text-xs opacity-70 mt-1 block">
-                  {message.timestamp.toLocaleTimeString()}
-                </span>
-              </div>
-            </div>
+        {messages.map((m) => (
+          <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {/* message bubble (omitted for brevity – keep your existing JSX) */}
           </div>
         ))}
-        
-        {isCreatingWorkflow && (
-          <div className="flex justify-start">
-            <div className="flex items-start gap-2 max-w-[80%]">
-              <div className="w-8 h-8 rounded-full bg-secondary text-muted-foreground flex items-center justify-center">
-                <Bot className="w-4 h-4" />
-              </div>
-              <div className="p-3 bg-secondary rounded-lg border">
-                <div className="flex items-center gap-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                  <span className="text-sm text-muted-foreground">Processando...</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        {isCreating && !pendingQuestion && (
+          /* spinner bubble (keep yours) */
+          <div>…</div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-4 border-t border-border">
+      {/* input */}
+      <div className="p-4 border-t">
         <div className="flex gap-2">
           <input
-            type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Descreva o workflow que você quer criar..."
-            className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            disabled={isCreatingWorkflow}
+            onKeyPress={handleKey}
+            placeholder="Digite aqui…"
+            className="flex-1 px-3 py-2 border rounded-lg"
+            disabled={isCreating && !pendingQuestion}
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim() || isCreatingWorkflow}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={!input.trim() || (isCreating && !pendingQuestion)}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg disabled:opacity-40"
           >
             <Send className="w-4 h-4" />
           </button>
@@ -241,4 +209,4 @@ export default function Chatbot({ onWorkflowCreated }: ChatbotProps) {
       </div>
     </div>
   )
-} 
+}

@@ -1,5 +1,18 @@
 from crewai import Task
-from config.agents import node_identifier, workflow_generator
+from config.agents import node_identifier, workflow_generator, clarifier_agent
+
+
+clarify_requirements_task = Task(
+    description="""
+    Com base no prompt abaixo e no histórico já coletado, descubra se
+    há dados faltantes para criar o workflow.
+    Siga rigorosamente o formato JSON descrito no backstory.
+    Prompt: {user_prompt}
+    Histórico: {history}
+    """,
+    expected_output="JSON com status READY ou ASK",
+    agent=clarifier_agent
+)
 
 identify_nodes_task = Task(
     description="""

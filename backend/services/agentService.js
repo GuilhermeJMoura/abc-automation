@@ -11,9 +11,16 @@ async function call(path, payload) {
 }
 
 exports.generateWorkflow = (prompt) => {console.log("Calling Crew AI to generate workflow with prompt:", prompt); return call('/generate-workflow', { user_prompt: prompt });};
-// exports.agent1Collect   = (prompt)               => call('agent1/collect',   { prompt });
-// exports.agent1Continue  = (feedback)             => call('agent1/continue',  { feedback });
-// exports.agent2Validate  = (context)              => call('agent2/validate',  { context });
-// exports.agent3Generate  = (context, nodes)       => call('agent3/generate',  { context, nodes });
-// exports.agent3Fix       = (context, error, json) => call('agent3/fix',       { context, error, json });
-// exports.agent4Validate  = (execution)            => call('agent4/validate',  { execution });
+// NEW helpers
+ /* Clarifier helpers (question is now a STRING) */
+ exports.startClarify = (prompt) =>
+   axios.post(`${CREW}/clarify`, { user_prompt: prompt })
+        .then(r => r.data);                     // {session_id, ready?, question}
+
+ exports.continueClarify = (sess, answer) =>
+   axios.post(`${CREW}/clarify`, {
+     session_id: sess,
+     user_prompt: answer
+   }).then(r => r.data);                        // same shape
+
+// existing (unchanged) generateWorkflow + fixWorkflow helpers … 

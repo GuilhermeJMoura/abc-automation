@@ -2,6 +2,7 @@ from crewai import Agent
 import os
 from config.tools import n8n_docs_search_tool
 from dotenv import load_dotenv
+# from config.ask_user_tool import AskUserTool
 import os
 
 # Load variables from .env into environment
@@ -11,6 +12,20 @@ load_dotenv()
 # Configuração do LLM diretamente no CrewAI
 # Você pode definir a variável de ambiente OPENAI_API_KEY ou configurá-la diretamente aqui
 # Substitua pela sua chave API real
+
+clarifier_agent = Agent(
+    role="Especialista em coleta de requisitos",
+    goal="Conversar com o usuário até ter todos os dados concretos e não-ambíguos",
+    backstory="""Você faz perguntas curtas, objetivas e leigas.
+    Quando julgar que já tem TUDO para a automação ser criada, devolve
+    STRICT JSON: {"status":"READY", "context":{…dados…}}.
+    Se faltar algo, devolve STRICT JSON:
+    {"status":"ASK", "questions":["Pergunta 1","Pergunta 2"]}.
+    Nunca devolva nada fora desse JSON.""",
+    verbose=False,
+    memory=True,
+    allow_delegation=False,
+)
 
 node_identifier = Agent(
     role="Especialista em identificação de componentes de automações n8n",

@@ -7,8 +7,8 @@ exports.createWorkflow = async (req, res, next) => {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
-    const workflow = await workflowService.handleCreation(prompt, sendProgress);
-    res.status(201).json(workflow);          // returns n8n workflow object
+    const { workflow, sid } = await workflowService.handleCreation(prompt);
+    res.status(201).json({ workflow, wsSession: sid });        // returns n8n workflow object
   } catch (err) { next(err); }
 };
 

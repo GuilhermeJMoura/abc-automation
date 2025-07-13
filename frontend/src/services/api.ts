@@ -10,14 +10,17 @@ export interface WorkflowResponse {
   createdAt: string
   updatedAt: string
 }
-
+export interface WorkflowApiResponse {
+  workflow: WorkflowResponse
+  wsSession: string
+}
 export interface ApiError {
   error: string
   message?: string
 }
 
 // Serviço para criar workflow
-export async function createWorkflow(prompt: string): Promise<WorkflowResponse> {
+export async function createWorkflow(prompt: string): Promise<WorkflowApiResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/workflows`, {
       method: 'POST',
