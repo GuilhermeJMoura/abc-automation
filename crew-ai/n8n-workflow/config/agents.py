@@ -19,7 +19,7 @@ node_identifier = Agent(
     memory=True,
     # O CrewAI usa o OpenAI por padrão, não precisamos especificar o LLM
     allow_delegation=False,
-    tools=[n8n_docs_search_tool]
+    # tools=[n8n_docs_search_tool]
 )
 
 workflow_generator = Agent(
@@ -34,5 +34,5 @@ workflow_generator = Agent(
     memory=True,
     # O CrewAI usa o OpenAI por padrão, não precisamos especificar o LLM
     allow_delegation=False,
-    tools=[n8n_docs_search_tool]
+    # tools=[n8n_docs_search_tool]
 )

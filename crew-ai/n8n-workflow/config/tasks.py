@@ -1,6 +1,6 @@
 from crewai import Task
 from config.agents import node_identifier, workflow_generator
-
+from config.workflow import Workflow        # ← NEW IMPORT
 
 identify_nodes_task = Task(
     description="""
@@ -37,5 +37,6 @@ generate_workflow_task = Task(
     """,
     expected_output="JSON completo e funcional do workflow n8n, contendo apenas nodes e operações que existem na plataforma.",
     agent=workflow_generator,
-    dependencies=[identify_nodes_task]
+    dependencies=[identify_nodes_task],
+    output_pydantic=Workflow                # ← ENFORCE STRUCTURED OUTPUT
 )
