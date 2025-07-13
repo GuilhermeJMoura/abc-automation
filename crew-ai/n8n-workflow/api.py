@@ -32,7 +32,7 @@ def generate_workflow():
             return jsonify({"error": "O parâmetro 'user_prompt' é obrigatório"}), 400
 
         # Configurar chave API se fornecida
-        api_key = ""
+        api_key = "<OPENAI_API_KEY>"  # Substitua pela sua chave API real
         if api_key:
             os.environ["OPENAI_API_KEY"] = api_key
 
