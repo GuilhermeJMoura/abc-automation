@@ -50,13 +50,29 @@ def generate_workflow():
             "instruction": instruction
         })
 
-        match = re.search(r"```json\n(.*?)\n```", str(result), re.DOTALL)
-        if match:
-            json_str = match.group(1)
-            parsed_result = json.loads(json_str)
-            return jsonify(parsed_result), 200
-        else:
-            return jsonify({"error": "Não foi possível extrair o JSON do resultado"}), 400
+        print("Resultado bruto do CrewAI:")
+        print(result)
+        print("=" * 50)
+        
+        result_str = str(result)
+        
+        # Remover ``` do início e fim
+        json_str = result_str.replace('```json', '').replace('```', '').strip()
+        
+        print("JSON limpo:")
+        print(json_str)
+        print("=" * 50)
+        
+        try:
+            # Parse do JSON
+            parsed_json = json.loads(json_str)
+            return jsonify(parsed_json), 200
+            
+        except json.JSONDecodeError as e:
+            return jsonify({
+                "error": f"Erro ao fazer parse do JSON: {str(e)}",
+                "raw_json": json_str
+            }), 400
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
